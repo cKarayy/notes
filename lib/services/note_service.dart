@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class NoteService {
   static final FirebaseFirestore _database = FirebaseFirestore.instance;
   static final CollectionReference _notesCollection =
-      _database.collection('notes');
+      _database.collection('notes'); 
 
   static Future<void> addNote(String title, String description) async {
     Map<String, dynamic> newNote = {
