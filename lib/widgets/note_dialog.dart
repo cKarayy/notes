@@ -69,6 +69,19 @@ class _NoteDialogState extends State<NoteDialog> {
               'Image: ',
             ),
           ),
+          Expanded(
+              child: _imageFile != null
+                  ? Image.file(
+                      _imageFile!,
+                      fit: BoxFit.cover,
+                    )
+                  : (widget.note?.imageUrl != null &&
+                          Uri.parse(widget.note!.imageUrl!).isAbsolute
+                      ? Image.network(
+                          widget.note!.imageUrl!,
+                          fit: BoxFit.cover,
+                        )
+                      : Container())),
           _imageFile != null ? Image.file(_imageFile!) : Container(),
           TextButton(
             onPressed: _pickImage,
@@ -91,6 +104,8 @@ class _NoteDialogState extends State<NoteDialog> {
             String? imageUrl;
             if (_imageFile != null) {
               imageUrl = await NoteService.uploadImage(_imageFile!);
+            } else {
+              imageUrl = widget.note?.imageUrl;
             }
             Note note = Note(
                 id: widget.note?.id,

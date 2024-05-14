@@ -54,7 +54,7 @@ class NoteList extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 80),
               children: snapshot.data!.map((document) {
                 return Card(
-                  child: ListTile(
+                  child: InkWell(
                     onTap: () {
                       showDialog(
                         context: context,
@@ -63,24 +63,60 @@ class NoteList extends StatelessWidget {
                         },
                       );
                     },
-                    leading: document.imageUrl != null
-                        ? CircleAvatar(
-                            backgroundImage: NetworkImage(document.imageUrl!),
-                          )
-                        : const CircleAvatar(
-                            backgroundColor: Colors.indigo,
-                            child: Icon(Icons.image),
+                    child: Column(
+                      children: [
+                        document.imageUrl != null &&
+                                Uri.parse(document.imageUrl!).isAbsolute
+                            ? ClipRRect(
+                                borderRadius: const BorderRadius.only(
+                                    topLeft: Radius.circular(30),
+                                    topRight: Radius.circular(30)),
+                                child: Ink.image(
+                                  image: NetworkImage(document.imageUrl!),
+                                  fit: BoxFit.cover,
+                                  alignment: Alignment.center,
+                                  width: double.infinity,
+                                  height: 150,
+                                ),
+                              )
+                            : Container(),
+                        ListTile(
+                          title: Text(document.title),
+                          subtitle: Text(document.description),
+                          trailing: InkWell(
+                            onTap: () {
+                              showDialog(
+                                context: context,
+                                builder: (context) {
+                                  return AlertDialog(
+                                    title: const Text('Confirm Delete'),
+                                    content: Text(
+                                        'Are you sure delete this document \'${document.title}\' ?'),
+                                    actions: [
+                                      TextButton(
+                                          onPressed: () =>
+                                              Navigator.of(context).pop(),
+                                          child: const Text('Cancel')),
+                                      TextButton(
+                                          onPressed: () {
+                                            NoteService.deleteNote(document)
+                                                .whenComplete(() =>
+                                                    Navigator.of(context)
+                                                        .pop());
+                                          },
+                                          child: const Text('Delete')),
+                                    ],
+                                  );
+                                },
+                              );
+                            },
+                            child: const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 10),
+                              child: Icon(Icons.delete),
+                            ),
                           ),
-                    title: Text(document.title),
-                    subtitle: Text(document.description),
-                    trailing: InkWell(
-                      onTap: () {
-                        NoteService.deleteNote(document);
-                      },
-                      child: const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 10),
-                        child: Icon(Icons.delete),
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 );
