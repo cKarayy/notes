@@ -1,8 +1,8 @@
 import 'dart:io';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:notes/models/note.dart';
 import 'package:path/path.dart' as path;
 
@@ -12,18 +12,7 @@ class NoteService {
       _database.collection('notes');
   static final FirebaseStorage _storage = FirebaseStorage.instance;
 
-  static Future<void> addNote(Note note) async {
-    Map<String, dynamic> newNote = {
-      'title': note.title,
-      'description': note.description,
-      'image_url': note.imageUrl,
-      'created_at': FieldValue.serverTimestamp(),
-      'updated_at': FieldValue.serverTimestamp(),
-    };
-    await _notesCollection.add(newNote);
-  }
-
-  static Future<String?> uploadImage(File imageFile) async {
+  static Future<String?> uploadImage(XFile imageFile) async {
     try {
       String fileName = path.basename(imageFile.path);
       Reference ref = _storage.ref().child('images/$fileName');
@@ -32,15 +21,28 @@ class NoteService {
       if (kIsWeb) {
         uploadTask = ref.putData(await imageFile.readAsBytes());
       } else {
-        uploadTask = ref.putFile(imageFile);
+        uploadTask = ref.putFile(File(imageFile.path));
       }
 
-      TaskSnapshot snapshot = await uploadTask;
-      String downloadUrl = await snapshot.ref.getDownloadURL();
+      TaskSnapshot taskSnapshot = await uploadTask;
+      String downloadUrl = await taskSnapshot.ref.getDownloadURL();
       return downloadUrl;
     } catch (e) {
       return null;
     }
+  }
+
+  static Future<void> addNote(Note note) async {
+    Map<String, dynamic> newNote = {
+      'title': note.title,
+      'description': note.description,
+      'image_url': note.imageUrl,
+      'latitude': note.latitude,
+      'longitude': note.longitude,
+      'created_at': FieldValue.serverTimestamp(),
+      'updated_at': FieldValue.serverTimestamp(),
+    };
+    await _notesCollection.add(newNote);
   }
 
   static Future<void> updateNote(Note note) async {
@@ -48,6 +50,8 @@ class NoteService {
       'title': note.title,
       'description': note.description,
       'image_url': note.imageUrl,
+      'latitude': note.latitude,
+      'longitude': note.longitude,
       'created_at': note.createdAt,
       'updated_at': FieldValue.serverTimestamp(),
     };
@@ -71,8 +75,11 @@ class NoteService {
           id: doc.id,
           title: data['title'],
           description: data['description'],
-          imageUrl: data[
-              'image_url'], //hrs sama string key nya (yg ad di dalam array)
+          imageUrl: data['image_url'],
+          latitude:
+              data['latitude'] != null ? data['latitude'] as double : null,
+          longitude:
+              data['longitude'] != null ? data['longitude'] as double : null,
           createdAt: data['created_at'] != null
               ? data['created_at'] as Timestamp
               : null,
